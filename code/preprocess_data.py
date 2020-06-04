@@ -14,7 +14,7 @@ f.close()
 #     video_list = i.split(' ') # i.e., ['ILSVRC2015_val_00000000', '1', '0', '464\n']
 #     os.mkdir('/home/songzhuoran/video/video-frame-based-acc/data/baseline_result/' + video_list[0])
 
-f = open("/home/songzhuoran/video/video-frame-based-acc/final_nms_result.txt","r") 
+f = open("/home/songzhuoran/video/video-frame-based-acc/tmp_nms_result.txt","r") 
 rectangles = f.readlines()
 f.close()
 
