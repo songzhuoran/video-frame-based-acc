@@ -4,11 +4,12 @@ import re
 from PIL import Image, ImageDraw, ImageColor
 import cv2
 import numpy as np
+import threading
 
 ## MV: [CurrentFrame, TargetFrame, BlockWidth, BlockHeight, CurrentBlockX, CurBlockY, TargetX, TargetY]
 
 IDX_DIR="/home/songzhuoran/video/video-frame-based-acc/data/idx/"
-B_OUT_DIR="/home/songzhuoran/video/video-frame-based-acc/data/mapping_result/"
+B_OUT_DIR="/home/songzhuoran/video/video-frame-based-acc/data/our_mapping_result/"
 P_DIR="/home/songzhuoran/video/video-frame-based-acc/data/baseline_result/"
 MVS_DIR="/home/songzhuoran/video/video-frame-based-acc/data/mvs/"
 
@@ -20,7 +21,7 @@ MVS_DIR="/home/songzhuoran/video/video-frame-based-acc/data/mvs/"
 # # make video directory
 # for i in video_names:
 #     video_list = i.split(' ') # i.e., ['ILSVRC2015_val_00000000', '1', '0', '464\n']
-#     os.mkdir('/home/songzhuoran/video/video-frame-based-acc/data/mapping_result/' + video_list[0])
+#     os.mkdir('/home/songzhuoran/video/video-frame-based-acc/data/our_mapping_result/' + video_list[0])
 
 mvsmat = []
 vis = [False] * 3000
@@ -57,17 +58,12 @@ def bframe_gen_kernel(fcnt):
 
     print("frame mate:")
     print(len(frame_mat))
-    print("fcnt:")
-    print(fcnt)
 
     with open(MVS_DIR+classname+".csv","r") as file:
         datainfo = csv.reader(file)
         tmp_class_list=[]
-        # print(datainfo)
         for row in datainfo:
             if int(row[0]) == fcnt:
-                if fcnt == 322:
-                    print("===== read mv =====")
                 w = int(row[2])
                 h = int(row[3])
                 srcx = int(row[4])
@@ -76,15 +72,8 @@ def bframe_gen_kernel(fcnt):
                 dsty = int(row[7])
                 TargetFrame = '%08d' % int(row[1])
                 if (TargetFrame) in os.listdir(B_OUT_DIR+classname):
-                    if fcnt == 322:
-                        print("B_OUT_DIR+classname + '/' + TargetFrame: ")
-                        print(B_OUT_DIR+classname + '/' + TargetFrame)
-                    # print("length of frame_mat target list")
-                    # print(len(frame_mat[B_OUT_DIR+classname + '/' + TargetFrame]))
+                    # print(TargetFrame)
                     for class_list in frame_mat[B_OUT_DIR+classname + '/' + TargetFrame]:
-                        if fcnt == 322:
-                            print("class_list:")
-                            print(class_list)
                         dst_class_type = class_list.classtype
                         # print(dst_class_type)
                         dst = class_list.img_data
@@ -95,22 +84,19 @@ def bframe_gen_kernel(fcnt):
                                         bframe_img[dst_class_type][srcy+j][srcx+i] = dst[dsty+j][dstx+i]
                                     else :
                                         bframe_img[dst_class_type][srcy+j][srcx+i] = (int(dst[dsty+j][dstx+i]) + int(bframe_img[dst_class_type][srcy+j][srcx+i])) / 2
+                                    if len(tmp_class_list)==0:
+                                        tmp_class_list.append(dst_class_type)
+                                    else:
+                                        for tmp in tmp_class_list:
+                                            if tmp!=dst_class_type:
+                                                tmp_class_list.append(dst_class_type)
                                     img_vis[dst_class_type][srcy+j][srcx+i] += 1
-                        if len(tmp_class_list)==0:
-                            tmp_class_list.append(dst_class_type)
-                        else:
-                            for tmp in tmp_class_list:
-                                if tmp!=dst_class_type:
-                                    tmp_class_list.append(dst_class_type)
-                        
-                    
-
+                
 
     if ('%08d' % fcnt) not in os.listdir(B_OUT_DIR+classname):
         os.mkdir(B_OUT_DIR+classname +'/'+'%08d' % fcnt)
 
     tmp_list=[]
-    # print("tmp_class_list:")
     # print(len(tmp_class_list))
     # print(B_OUT_DIR+classname + '/' +'%08d' % fcnt)
     for i in tmp_class_list:
@@ -119,17 +105,6 @@ def bframe_gen_kernel(fcnt):
         tmp_list.append(Image_mat(i,bframe_img[i]))
         
     frame_mat[B_OUT_DIR+classname +'/'+'%08d' % fcnt] = tmp_list
-    if fcnt % 50 == 0 and fcnt!=0:
-        frame_mat_tmp = deepcopy(frame_mat)
-        frame_mat.clear()
-        for i in range(6):
-            if (B_OUT_DIR+classname +'/'+'%08d' % (fcnt-i)) in frame_mat_tmp[B_OUT_DIR+classname +'/'+'%08d' % (fcnt-i)] :
-                frame_mat[B_OUT_DIR+classname +'/'+'%08d' % (fcnt-i)] = frame_mat_tmp[B_OUT_DIR+classname +'/'+'%08d' % (fcnt-i)]
-        for i in range(5):
-            if (B_OUT_DIR+classname +'/'+'%08d' % (fcnt+i+1)) in frame_mat_tmp[B_OUT_DIR+classname +'/'+'%08d' % (fcnt+i+1)] :
-                frame_mat[B_OUT_DIR+classname +'/'+'%08d' % (fcnt+i+1)] = frame_mat_tmp[B_OUT_DIR+classname +'/'+'%08d' % (fcnt+i+1)]
-        frame_mat_tmp.clear()
-
     
 
 
@@ -209,6 +184,22 @@ def bframe_gen():
 
 def main():
     mvsfiles= os.listdir(B_OUT_DIR)
+    j = 0
+    for i in range(mvsfiles):
+        global frame_mat
+        global classname
+        global mvsmat
+        global vis
+        classname = mvsfiles[i]
+        vis = [False] * 3000
+        mvsmat = []
+        frame_mat.clear()
+        thread1 = bframe_gen()
+        thread1.start()
+        i = i + 1
+        if i==5:
+            i = 0
+            thread1.join()
     for filename in mvsfiles: # i.e., ILSVRC2015_val_00177000
         global frame_mat
         global classname
@@ -218,7 +209,13 @@ def main():
         vis = [False] * 3000
         mvsmat = []
         frame_mat.clear()
-        bframe_gen()
+        thread1 = bframe_gen()
+        thread1.start()
+        i = i + 1
+        if i==5:
+            i = 0
+            thread1.join()
+        
 
 
 
