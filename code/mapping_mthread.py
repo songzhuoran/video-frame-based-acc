@@ -9,7 +9,7 @@ import threading
 ## MV: [CurrentFrame, TargetFrame, BlockWidth, BlockHeight, CurrentBlockX, CurBlockY, TargetX, TargetY]
 
 IDX_DIR="/home/songzhuoran/video/video-frame-based-acc/data/idx/"
-B_OUT_DIR="/home/songzhuoran/video/video-frame-based-acc/data/our_mapping_result/"
+B_OUT_DIR="/home/songzhuoran/video/video-frame-based-acc/data/mapping_result_mthread//"
 P_DIR="/home/songzhuoran/video/video-frame-based-acc/data/baseline_result/"
 MVS_DIR="/home/songzhuoran/video/video-frame-based-acc/data/mvs/"
 
@@ -21,7 +21,7 @@ MVS_DIR="/home/songzhuoran/video/video-frame-based-acc/data/mvs/"
 # # make video directory
 # for i in video_names:
 #     video_list = i.split(' ') # i.e., ['ILSVRC2015_val_00000000', '1', '0', '464\n']
-#     os.mkdir('/home/songzhuoran/video/video-frame-based-acc/data/our_mapping_result/' + video_list[0])
+#     os.mkdir('/home/songzhuoran/video/video-frame-based-acc/data/mapping_result_mthread/' + video_list[0])
 
 mvsmat = []
 vis = [False] * 3000
@@ -181,40 +181,24 @@ def bframe_gen():
 
 
 
-
 def main():
-    mvsfiles= os.listdir(B_OUT_DIR)
-    j = 0
-    for i in range(mvsfiles):
+    filename = sys.argv[1]
+    f = open(filename,'r')
+    video_names = f.readlines()
+    f.close()
+    print(video_names[0])
+    for video_name in video_names: # i.e., ILSVRC2015_val_00177000
+        video_name = re.sub('\n', '', video_name) # i.e., 25
         global frame_mat
         global classname
         global mvsmat
         global vis
-        classname = mvsfiles[i]
+        classname = video_name
         vis = [False] * 3000
         mvsmat = []
         frame_mat.clear()
-        thread1 = bframe_gen()
-        thread1.start()
-        i = i + 1
-        if i==5:
-            i = 0
-            thread1.join()
-    for filename in mvsfiles: # i.e., ILSVRC2015_val_00177000
-        global frame_mat
-        global classname
-        global mvsmat
-        global vis
-        classname = filename
-        vis = [False] * 3000
-        mvsmat = []
-        frame_mat.clear()
-        thread1 = bframe_gen()
-        thread1.start()
-        i = i + 1
-        if i==5:
-            i = 0
-            thread1.join()
+        bframe_gen()
+
         
 
 
