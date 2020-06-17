@@ -2,10 +2,10 @@ import os
 import numpy as np
 import cv2
 
-Map_DIR="/home/songzhuoran/video/video-frame-based-acc/data/mapping_result_mthread/"
+Map_DIR="/home/songzhuoran/video/video-frame-based-acc/data/baseline_result/"
 Bench_DIR="/home/songzhuoran/video/video-frame-based-acc/data/benchmark_result/"
 
-record_file = open("/home/songzhuoran/video/video-frame-based-acc/result.csv", "w")
+record_file = open("/home/songzhuoran/video/video-frame-based-acc/result_baseline.csv", "w")
 
 def main():
     videofiles= os.listdir(Map_DIR)

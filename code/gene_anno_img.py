@@ -24,8 +24,9 @@ for videofile in videofiles:
     imagefiles = os.listdir(ANN_DIR+videofile)
     for imagefile in imagefiles:
         framenum = re.sub('[.xml]', '', imagefile)
-        framenum = "%08d" % int(framenum)
-        with open(ANN_DIR+videofile+"/"+framenum+".xml","r") as gtfile: # ground truth file
+        framenum1 = "%06d" % int(framenum)
+        framenum2 = "%08d" % int(framenum)
+        with open(ANN_DIR+videofile+"/"+framenum1+".xml","r") as gtfile: # ground truth file
             gtline = gtfile.readline()
             while gtline:
                 for i in range(len(classes_map)):
@@ -47,7 +48,7 @@ for videofile in videofiles:
                             for x in range(len_x):
                                 for y in range(len_y):
                                     cur_img[int(gtminy+y)][int(gtminx+x)] = 255
-                            imgstr = Ben_DIR + videofile+"/"+framenum+"/"+str(classes_map[i])+".png"
+                            imgstr = Ben_DIR + videofile+"/"+framenum2+"/"+str(classes_map[i])+".png"
                             cv2.imwrite(imgstr,cur_img)
 
                         gtline = gtfile.readline()
